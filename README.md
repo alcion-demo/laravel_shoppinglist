@@ -94,6 +94,7 @@ composer require laravel-lang/lang:~8.0
 php artisan lang:publish
 cp ./vendor/laravel-lang/lang/json/ja.json ./lang/
 cp -r ./vendor/laravel-lang/lang/src/ja ./lang/
+composer require blade-ui-kit/blade-heroicons
 ```
 #### 8. AI SDK の導入
 ```

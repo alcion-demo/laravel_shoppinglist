@@ -29,4 +29,25 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+    /**
+     * ユーザー一覧検索
+     * @param request $request
+     * @return \App\Models\User
+     */
+    public function userList($request) {
+        $query = $this->query();
+
+        if (!empty($request)) {
+            // 検索条件を ( ) で囲むように修正（grouping）
+            $query->where(function($q) use ($request) {
+                $q->where('name', 'LIKE', "%{$request}%")
+                  ->orWhere('email', 'LIKE', "%{$request}%");
+            });
+        }
+
+        $users = $query->latest()->paginate(25);
+
+        return $users;
+    }
 }

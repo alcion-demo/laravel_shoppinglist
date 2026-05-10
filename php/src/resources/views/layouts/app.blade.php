@@ -13,10 +13,24 @@
 
         <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
+
     </head>
-    <body class="font-sans antialiased">
+    <body x-data="{ 
+        darkMode: localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches),
+        openHistory: false 
+    }"
+    x-init="$watch('darkMode', val => {
+        if (val) {
+            document.documentElement.classList.add('dark');
+            localStorage.setItem('color-theme', 'dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+            localStorage.setItem('color-theme', 'light');
+        }
+    })"
+    class="font-sans antialiased text-gray-900 dark:text-gray-100"
+    :class="{ 'dark': darkMode }">
         <div class="min-h-screen bg-gray-100 dark:bg-gray-900">
-            @include('layouts.navigation')
 
             <!-- Page Heading -->
             @isset($header)
