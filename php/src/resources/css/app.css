@@ -1,3 +1,40 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+    /* 入力欄のオートフィル（自動補完）対策を一括設定 */
+    input:-webkit-autofill,
+    input:-webkit-autofill:hover, 
+    input:-webkit-autofill:focus {
+        /* 文字色は現在のテーマのテキスト色に合わせる */
+        -webkit-text-fill-color: theme('colors.slate.900');
+        /* 背景色を透過させるためのトリック（内側に影を落として背景を上書き） */
+        -webkit-box-shadow: 0 0 0px 1000px theme('colors.slate.50') inset;
+        transition: background-color 5000s ease-in-out 0s;
+    }
+    input[type="number"] {
+        color-scheme: dark;
+    }
+
+    /* ダークモード時のオートフィル色 */
+    .dark input:-webkit-autofill,
+    .dark input:-webkit-autofill:hover, 
+    .dark input:-webkit-autofill:focus {
+        -webkit-text-fill-color: theme('colors.slate.100');
+        -webkit-box-shadow: 0 0 0px 1000px theme('colors.slate.900') inset;
+    }
+
+    /* デフォルトの青い枠線（Ring）を消してスッキリさせる */
+    input:focus, select:focus, textarea:focus {
+        outline: none;
+        box-shadow: none;
+    }
+}
+
+@layer components {
+    /* よく使う入力欄のスタイルをコンポーネント化 */
+    .input-basic {
+        @apply w-full border-none bg-transparent text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 text-sm py-1 px-0 focus:ring-0;
+    }
+}
