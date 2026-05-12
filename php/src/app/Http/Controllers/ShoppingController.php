@@ -27,7 +27,6 @@ class ShoppingController extends Controller
         $userId = auth()->id();
 
         return view('shopping.index', [
-            // 無名関数を使わず、定義済みのリレーション名を指定
             'items' => ShoppingItem::forUser($userId)
                         ->active()
                         ->with('recentPurchaseLogs')

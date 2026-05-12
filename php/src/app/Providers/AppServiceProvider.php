@@ -22,8 +22,7 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Gate::define('admin', function (User $user) {
-            // ここで dump($user->email) して確認してみるのも手です
-            return $user->email === 'admin@example.com';
+            return (bool) $user->is_admin;
         });
     }
 }
