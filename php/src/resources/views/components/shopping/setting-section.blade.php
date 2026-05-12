@@ -20,7 +20,7 @@
         </a>
 
         {{-- 管理者専用メニュー --}}
-        @if(auth()->user()?->email === 'admin@example.com')
+        @can('admin')
             <div class="pt-4 mt-4 border-t border-slate-200 dark:border-white/10">
                 <h2 class="text-xs font-bold text-slate-400 uppercase tracking-wider px-2 mb-2">管理者専用</h2>
                 
@@ -40,7 +40,7 @@
                     <span class="text-red-300">›</span>
                 </a>
             </div>
-        @endif
+        @endcan
 
         {{-- ログアウト項目 --}}
         <form method="POST" action="{{ route('logout') }}">

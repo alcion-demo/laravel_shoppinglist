@@ -12,8 +12,7 @@
                         </svg>
                     </div>
                     <div>
-                        <h1 class="text-xl font-black text-slate-950 dark:text-white tracking-tighter uppercase">User Management</h1>
-                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">ユーザー管理</p>
+                        <h1 class="text-xl font-black text-slate-950 dark:text-white tracking-tighter uppercase">ユーザー管理</h1>
                     </div>
                 </div>
                 {{-- 戻るボタン（設定タブへ） --}}
@@ -26,14 +25,33 @@
 
             {{-- 検索フォーム --}}
             <form action="{{ route('admin.users.index') }}" method="GET" class="relative group">
+                {{-- inputのパディングを pr-24 くらいに広げる --}}
                 <input type="text" name="keyword" placeholder="名前・メールで検索..." value="{{ $keyword }}" 
-                    class="w-full pl-11 pr-16 py-3 bg-white dark:bg-slate-800 border-none rounded-2xl shadow-sm text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 transition-all">
+                    class="w-full pl-11 pr-24 py-3 bg-white dark:bg-slate-800 border-none rounded-2xl shadow-sm text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 transition-all">
+                
+                {{-- 虫眼鏡アイコン --}}
                 <div class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
                 </div>
+
+                {{-- ボタン類をまとめるコンテナを「right-1.5」にする --}}
+            <div class="absolute right-1.5 top-1/2 -translate-y-1/2 flex items-center">
                 @if(!empty(request('keyword')))
-                    <a href="{{ route('admin.users.index') }}" class="absolute right-3 top-1/2 -translate-y-1/2 px-2 py-1 bg-slate-100 dark:bg-slate-700 rounded-md text-[10px] font-bold text-slate-500 dark:text-slate-300">クリア</a>
+                    {{-- 検索済みの時は「解除（クリア）」を大きく出す --}}
+                    <a href="{{ route('admin.users.index') }}" 
+                    class="px-4 py-1.5 bg-slate-200 dark:bg-slate-700 rounded-xl text-[11px] font-bold text-slate-600 dark:text-slate-300 active:scale-95 transition-all">
+                        クリア
+                    </a>
+                @else
+                    {{-- 未入力の時だけ「検索」ボタンを出す --}}
+                    <button
+                        type="submit"
+                        class="px-4 py-1.5 bg-blue-600 text-white text-[11px] font-bold rounded-xl active:scale-95 transition-all shadow-md shadow-blue-500/20"
+                    >
+                        検索
+                    </button>
                 @endif
+            </div>
             </form>
         </header>
 
@@ -41,6 +59,29 @@
             {{-- ページネーション --}}
             <div class="px-1">
                 {{ $users->links() }}
+            </div>
+
+            <div class="mb-4">
+                <a href="{{ route('admin.users.create') }}" 
+                class="flex items-center justify-between p-3 rounded-2xl bg-white/50 dark:bg-white/5 border border-blue-500/30 dark:border-blue-500/20 shadow-sm active:scale-[0.98] transition-all">
+                    <div class="flex items-center gap-3">
+                        {{-- アイコンも一回り小さく --}}
+                        <div class="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-md shadow-blue-500/20">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
+                            </svg>
+                        </div>
+                        <div>
+                            <div class="text-xs font-black text-slate-900 dark:text-white uppercase tracking-wider">New User</div>
+                            <div class="text-[10px] text-slate-500 font-bold">新規ユーザー登録</div>
+                        </div>
+                    </div>
+                    <div class="mr-1 text-blue-500">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                        </svg>
+                    </div>
+                </a>
             </div>
 
             {{-- ユーザーリスト（スマホ向けカード型） --}}
