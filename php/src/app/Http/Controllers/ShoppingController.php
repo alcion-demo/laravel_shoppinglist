@@ -29,21 +29,9 @@ class ShoppingController extends Controller
         $userId = auth()->id();
 
         return view('shopping.index', [
-            // CurrentCart からログインユーザーのデータを取得する
-            'items' => CurrentCart::whereHas('item', function ($query) use ($userId) {
-                            $query->where('user_id', $userId);
-                        })
-                        ->with('item') // 画面で商品名（$item->item->name）を表示できるようにリレーションをロード
-                        ->get(),
-
-            // アクセサ名 'purchased_date_string' を指定してグループ化（履歴はそのまま）
-            'history' => PurchaseLog::whereHas('item', function ($query) use ($userId) {
-                            $query->where('user_id', $userId);
-                        })
-                        ->with('item')
-                        ->latest('purchased_at')
-                        ->get()
-                        ->groupBy('purchased_date_string'),
+            'items'         => CurrentCart::forUser($userId)->with('item')->get(),
+            'history'       => PurchaseLog::forUser($userId)->with('item')->latest('purchased_at')->get()->groupBy('purchased_date_string'),
+            'frequentItems' => PurchaseLog::getFrequentItems($userId), 
         ]);
     }
 

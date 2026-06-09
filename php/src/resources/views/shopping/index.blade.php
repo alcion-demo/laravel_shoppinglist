@@ -19,7 +19,7 @@
 
     <div x-data="{ activeTab: 'list', openHistory: {} }" class="max-w-md mx-auto">
         <div class="pb-24 p-4">
-            <x-shopping.list-section :items="$items" />
+            <x-shopping.list-section :items="$items" :frequentItems="$frequentItems" />
             <x-shopping.history-section :history="$history" />
             <x-shopping.setting-section />
             <x-custom-bottom-nav />

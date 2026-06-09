@@ -22,37 +22,39 @@ class ShoppingService
     public function savePurchase(int $userId, array $data): CurrentCart
     {
 
+        // 1. 商品を検索
         $item = ShoppingItem::where('user_id', $userId)
                 ->where('name', $data['name'])
                 ->first();
 
-        if (!$item) {
-            $item = ShoppingItem::create([
-                'user_id' => $userId,
-                'name'    => $data['name'],
-                'is_active' => true, 
-            ]);
-        }
+        // 2. カートに存在するか確認（そのユーザーのカート内限定にするために userId も考慮）
+        $cartItem = CurrentCart::where('shopping_item_id', $item?->id)
+                                ->whereHas('item', fn($q) => $q->where('user_id', $userId))
+                                ->first();
 
-        // 2. すでに今回のカート（CurrentCart）に同じ商品が入っているか確認
-        $cartItem = CurrentCart::where('shopping_item_id', $item->id)->first();
-
+        // ★重要：すでにカートにある場合、クイック追加（データなし）なら何もしない
         if ($cartItem) {
-            // 【編集対応】フォームから送られてきた新しい数量・価格・店舗情報で「上書き」します
-            $cartItem->update([
-                'quantity'  => $data['quantity'] ?? $cartItem->quantity,
-                'price'     => isset($data['price']) ? (int)$data['price'] : $cartItem->price,
-                'shop_type' => $data['shop_type'] ?? $cartItem->shop_type->value,
-            ]);
+            // 価格や個数が送られてきた時（手動入力）だけ更新する
+            if (isset($data['price']) || isset($data['quantity'])) {
+                $cartItem->update([
+                    'quantity'  => $data['quantity'] ?? $cartItem->quantity,
+                    'price'     => isset($data['price']) ? (int)$data['price'] : $cartItem->price,
+                    'shop_type' => $data['shop_type'] ?? $cartItem->shop_type->value,
+                ]);
+            }
             return $cartItem;
         }
 
-        // 3. カートに新しく登録する
+        // 3. カートにない場合、新規作成
+        // このとき、もし過去の履歴から「一番最近の単価や個数」を引っ張りたいならここで検索する
+        $lastLog = PurchaseLog::whereHas('item', fn($q) => $q->where('name', $data['name']))
+                            ->latest()->first();
+
         return CurrentCart::create([
             'shopping_item_id' => $item->id,
-            'price'            => isset($data['price']) ? (int)$data['price'] : 0,
-            'quantity'         => $data['quantity'] ?? null,
-            'shop_type'        => $data['shop_type'] ?? ShopType::Supermarket->value,
+            'quantity'         => $data['quantity'] ?? $lastLog?->quantity ?? 1,
+            'price'            => (int)($data['price'] ?? $lastLog?->price ?? 0),
+            'shop_type'        => $data['shop_type'] ?? $lastLog?->shop_type->value ?? ShopType::Supermarket->value,
         ]);
     }
 
