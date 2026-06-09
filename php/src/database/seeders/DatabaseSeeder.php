@@ -8,6 +8,7 @@ use Illuminate\Database\Seeder;
 use App\Enums\ShopType;
 use App\Models\ShoppingItem;
 use App\Models\PurchaseLog;
+use App\Models\CurrentCart;
 
 class DatabaseSeeder extends Seeder
 {
@@ -20,6 +21,7 @@ class DatabaseSeeder extends Seeder
     {
         // User::factory(10)->create();
 
+        // 1. 管理者
         $admin = User::create([
             'name' => '管理者',
             'email' => 'admin@example.com',
@@ -41,16 +43,25 @@ class DatabaseSeeder extends Seeder
             'name' => 'たまご',
         ]);
 
+        // 過去の履歴（1日前）
         PurchaseLog::create([
             'shopping_item_id' => $item1->id,
             'price' => 250,
             'quantity'     => '1パック',
             'shop_type' => ShopType::Supermarket,
-            'purchased_at' => now()->subDays(1), // 昨日の購入（3日以内表示のテスト）
+            'purchased_at' => now()->subDays(1), 
         ]);
 
+        // ★ 新設：管理者の「たまご」が、今回の買い物リスト（カート）に入っている状態を作る
+        CurrentCart::create([
+            'shopping_item_id' => $item1->id,
+            'price'            => 250,       // 編集可能な今回の予定価格
+            'quantity'         => 1,         // 編集可能な今回の予定数量（数値）
+            'shop_type'        => ShopType::Supermarket,
+        ]);
+
+
         // --- 一般ユーザーのデータ（牛乳） ---
-        // これが管理者の画面に出てこなければ「出し分け成功」
         $item2 = ShoppingItem::create([
             'user_id' => $user->id,
             'name' => '牛乳',
@@ -60,7 +71,7 @@ class DatabaseSeeder extends Seeder
             'shopping_item_id' => $item2->id,
             'price' => 200,
             'shop_type' => ShopType::Dollarsgore,
-            'purchased_at' => now()->subDays(5), // 5日前の購入
+            'purchased_at' => now()->subDays(5),
         ]);
     }
 }

@@ -9,9 +9,10 @@ use App\Models\User;
 use App\Models\PurchaseLog;
 use App\Models\ShoppingItem;
 use App\Services\ShoppingService;
-use App\Http\Requests\StoreSoppingRequest;
+use App\Http\Requests\StoreShoppingRequest;
+use App\Http\Requests\UpdateShoppingRequest;
 use Illuminate\Support\Facades\Auth;
-
+use App\Models\CurrentCart;
 
 class ShoppingController extends Controller
 {
@@ -20,6 +21,7 @@ class ShoppingController extends Controller
      */
     public function __construct(
         protected ShoppingService $shoppingservice,
+        protected CurrentCart $currentCart,
     ){}
 
     public function index()
@@ -27,12 +29,14 @@ class ShoppingController extends Controller
         $userId = auth()->id();
 
         return view('shopping.index', [
-            'items' => ShoppingItem::forUser($userId)
-                        ->active()
-                        ->with('recentPurchaseLogs')
+            // CurrentCart からログインユーザーのデータを取得する
+            'items' => CurrentCart::whereHas('item', function ($query) use ($userId) {
+                            $query->where('user_id', $userId);
+                        })
+                        ->with('item') // 画面で商品名（$item->item->name）を表示できるようにリレーションをロード
                         ->get(),
 
-            // アクセサ名 'purchased_date_string' を指定してグループ化
+            // アクセサ名 'purchased_date_string' を指定してグループ化（履歴はそのまま）
             'history' => PurchaseLog::whereHas('item', function ($query) use ($userId) {
                             $query->where('user_id', $userId);
                         })
@@ -43,16 +47,65 @@ class ShoppingController extends Controller
         ]);
     }
 
-    public function store(StoreSoppingRequest $request)
+    /**
+     * 編集画面を表示する
+     */
+    public function edit(int $shopping)
+    {
+        // 編集したいカートの商品を取得
+        $cart = CurrentCart::with('item')->findOrFail($shopping);
+        
+        // edit.blade.php へデータを渡して表示
+        return view('shopping.edit', compact('cart'));
+    }
+
+    public function store(StoreShoppingRequest $request)
     {
         $validated = $request->validated();
         $this->shoppingservice->savePurchase(auth()->id(),$validated);
         return redirect()->route('shopping.index');
     }
 
-    public function destroy(ShoppingItem $shoppingItem) {
+    /**
+     * 編集された内容で買い物リスト（カート）を更新する
+     */
+    public function update(UpdateShoppingRequest $request, int $shopping)
+    {
+        $cart = CurrentCart::findOrFail($shopping);
+
+        // フォームから送られてきた内容でカートを更新
+        $cart->update([
+            'price'     => $request->input('price', 0),
+            'quantity'  => $request->input('quantity'),
+            'shop_type' => $request->input('shop_type'),
+        ]);
+
+        // もし商品名（ShoppingItemの名前）も変更できるようにしたい場合は以下も追記
+        $cart->item->update([
+            'name' => $request->input('name')
+        ]);
+
+        return redirect()->route('shopping.index')->with('message', 'リストを修正しました！');
+    }
+
+    public function destroy(int $shopping) {
         //論理削除
-        $shoppingItem->update(['is_active' => false]);
+        $cart = CurrentCart::findOrFail($shopping);
+        $cart->delete();
         return redirect()->back();
+    }
+
+    /**
+     * カートのアイテムを購入完了（履歴へ移動）にする
+     *
+     * @param integer $id
+     * @return void
+     */
+    public function purchase(int $shopping)
+    {
+
+        $this->shoppingservice->recordPurchase($shopping, []);
+
+        return redirect()->back()->with('message', '購入記録を保存しました！');
     }
 }

@@ -36,8 +36,16 @@
                             </div>
                         </div>
 
-                        <div class="font-mono font-bold text-gray-600 dark:text-gray-300">
-                            ¥{{ number_format($log->price) }}
+                        <div class="flex items-center gap-2 font-mono font-bold text-gray-600 dark:text-gray-300 text-sm">
+                            @if($log->price > 0)
+                                <span>¥{{ number_format($log->price) }}</span>
+                            @endif
+
+                            @if(!empty($log->quantity))
+                                <span class="text-xs text-gray-400 dark:text-gray-500 font-normal">
+                                    ×&nbsp;{{ $log->quantity }}
+                                </span>
+                            @endif
                         </div>
 
                     </div>

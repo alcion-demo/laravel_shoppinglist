@@ -20,9 +20,14 @@
                 </button>
             </div>
 
-            <div class="mb-12 text-center">
-                <div class="w-20 h-20 bg-blue-600 rounded-[28px] flex items-center justify-center mx-auto shadow-2xl shadow-blue-500/40">
-                    <svg class="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
+            {{-- ⭕ ロゴエリア：背景の青ボックスを取り除き、全体サイズを調整 --}}
+            <div class="mb-10 text-center">
+                <div class="w-32 h-16 flex items-center justify-center mx-auto 
+                    text-blue-700 dark:text-blue-400 
+                    filter drop-shadow-[0_4px_14px_rgba(29,78,216,0.25)] 
+                    dark:drop-shadow-[0_6px_24px_rgba(59,130,246,0.35)]">
+
+                    <x-app-logo class="w-full h-full" />
                 </div>
                 <h1 class="mt-5 text-2xl font-black dark:text-white text-slate-900 tracking-tight">買い物メモ</h1>
             </div>

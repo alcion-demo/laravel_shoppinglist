@@ -13,7 +13,7 @@
 
             <div class="flex gap-2">
                 <input type="text" name="name"
-                    class="flex-1 rounded-lg border-gray-700 bg-transparent text-black dark:text-white"
+                    class="flex-1 rounded-lg border-gray-300 dark:border-gray-700 bg-transparent text-black dark:text-white"
                     placeholder="何を買う？">
 
                 <button type="submit"
@@ -24,7 +24,7 @@
 
             <div class="flex gap-2 items-center">
                 <select name="shop_type"
-                    class="flex-1 rounded-lg border-gray-700 bg-transparent text-black dark:text-white text-sm">
+                    class="flex-1 rounded-lg border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-black dark:text-white text-sm">
                     @foreach(ShopType::cases() as $type)
                         <option value="{{ $type->value }}">
                             {{ $type->label() }}
@@ -33,11 +33,11 @@
                 </select>
 
                 <input type="number" name="price" min="0" value="0"
-                    class="w-28 rounded-lg border-gray-700 bg-transparent text-black dark:text-white text-sm"
+                    class="w-28 rounded-lg border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-black dark:text-white text-sm"
                     placeholder="単価">
 
                 <input type="text" name="quantity"
-                    class="w-16 rounded-lg border-gray-700 bg-transparent text-black dark:text-white text-sm"
+                    class="w-16 rounded-lg border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-black dark:text-white text-sm"
                     placeholder="個">
             </div>
 
@@ -50,9 +50,13 @@
             最近のアイテム
         </h3>
 
-        @foreach ($items as $item)
-            <x-shopping.item-card :item="$item" />
+        @foreach ($items as $cart)
+            <x-shopping.item-card :cart="$cart" />
         @endforeach
+
+        @if($items->isEmpty())
+            <p class="text-center text-sm text-gray-400 py-4">リストは空です</p>
+        @endif
     </div>
 
 </section>
