@@ -16,15 +16,53 @@ class PurchaseLog extends Model
         'purchased_at' => 'datetime',
     ];
 
+    /**
+     * 商品情報取得
+     *
+     * @return void
+     */
     public function item()
     {
         return $this->belongsTo(ShoppingItem::class, 'shopping_item_id');
     }
 
+    /**
+     * 日付加工
+     *
+     * @return string
+     */
     public function getPurchasedDateStringAttribute(): string
     {
         return $this->purchased_at->format('Y-m-d');
     }
 
+    /**
+     * ユーザーデータ絞り込み
+     *
+     * @param Builder $query
+     * @param integer $userId
+     * @return Builder
+     */
+    public function scopeForUser(Builder $query, int $userId): Builder
+    {
+        return $query->whereHas('item', fn($q) => $q->where('user_id', $userId));
+    }
+
+    /**
+     * 良く購入する商品取得
+     *
+     * @param integer $userId
+     * @param integer $limit
+     * @return void
+     */
+    public static function getFrequentItems(int $userId, int $limit = 5)
+    {
+        return self::forUser($userId)
+            ->get()
+            ->groupBy('shopping_item_id')
+            ->sortByDesc(fn($logs) => $logs->count())
+            ->take($limit)
+            ->map(fn($logs) => $logs->first()); // 代表して最新の情報を返す
+    }
 
 }
