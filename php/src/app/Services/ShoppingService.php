@@ -8,13 +8,14 @@ use App\Models\PurchaseLog;
 use Illuminate\Support\Facades\Http;
 use App\Enums\ShopType;
 use App\Models\CurrentCart;
+use App\Ai\Agents\NoblemanAgent;
 
 class ShoppingService
 {
     /**
      * Create a new class instance.
      */
-    public function __construct()
+    public function __construct(protected NoblemanAgent $agent)
     {
         //
     }
@@ -22,17 +23,18 @@ class ShoppingService
     public function savePurchase(int $userId, array $data): CurrentCart
     {
 
-        // 1. 商品を検索
-        $item = ShoppingItem::where('user_id', $userId)
-                ->where('name', $data['name'])
-                ->first();
+        // 1. 商品を検索、なければ新規作成する（firstOrCreate を使う）
+        $item = ShoppingItem::firstOrCreate(
+            ['user_id' => $userId, 'name' => $data['name']],
+            // 新規作成時のみ設定したい値があればここへ
+        );
 
         // 2. カートに存在するか確認（そのユーザーのカート内限定にするために userId も考慮）
         $cartItem = CurrentCart::where('shopping_item_id', $item?->id)
                                 ->whereHas('item', fn($q) => $q->where('user_id', $userId))
                                 ->first();
 
-        // ★重要：すでにカートにある場合、クイック追加（データなし）なら何もしない
+        // すでにカートにある場合、クイック追加（データなし）なら何もしない
         if ($cartItem) {
             // 価格や個数が送られてきた時（手動入力）だけ更新する
             if (isset($data['price']) || isset($data['quantity'])) {
@@ -89,13 +91,11 @@ class ShoppingService
      */
     public function getRecipeSuggestions(array $items)
     {
-        $apiKey = config('services.gemini.key');
-        $prompt = implode(',', $items) . " を使った簡単な献立を3つ提案して。";
+        $ingredients = implode('、', array_map(fn($i) => $i['name'], $items));
 
-        $response = Http::post("https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key={$apiKey}", [
-            'contents' => [['parts' => [['text' => $prompt]]]]
-        ]);
+        // エージェントに依頼（JSON構造が自動適用される）
+        $response = $this->agent->ask("冷蔵庫に「{$ingredients}」があるのじゃ。献立を提案してほしい。");
 
-        return $response->json('candidates.0.content.parts.0.text');
+        return $response->object()->recipes ?? [];
     }
 }
