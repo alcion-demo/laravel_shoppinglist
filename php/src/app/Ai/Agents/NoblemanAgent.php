@@ -61,7 +61,6 @@ class NoblemanAgent implements Agent, Conversational, HasStructuredOutput, HasTo
     public function schema(JsonSchema $schema): array
     {
         return [
-            // 'value' => $schema->string()->required(),
             'recipes' => $schema->array()->items($schema->object([
                 'missing_ingredients' => $schema->array()->items($schema->string())
                     ->description('この料理を作るために不足している食材'),

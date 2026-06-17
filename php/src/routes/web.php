@@ -26,6 +26,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // 標準のCRUD処理をリソースでひとまとめにする（必要なものだけ only で指定）
     Route::resource('shopping', ShoppingController::class)->only(['index', 'store', 'destroy', 'edit', 'update']);
 
+    Route::get('/shopping/recipe-status/{jobId}', [ShoppingController::class, 'getRecipeStatus']);
+
     // 管理者のみ：ユーザー登録（Breezeのデフォルトを上書きorラップ）
     // ゲート 'admin-only' は AppServiceProvider で定義済みである必要があります
     Route::middleware(['can:admin'])->prefix('admin')->name('admin.')->group(function () {

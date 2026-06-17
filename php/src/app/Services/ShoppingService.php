@@ -98,4 +98,33 @@ class ShoppingService
 
         return $response->object()->recipes ?? [];
     }
+
+    /**
+     * 禁止ワード
+     *
+     * @param string $item
+     * @return boolean
+     */
+    public function isInvalid(string $item): bool
+    {
+        $allowWords = [
+            'もも',
+        ];
+
+        if (in_array($item, $allowWords, true)) {
+            return false;
+        }
+
+        // ひらがな1文字
+        if (preg_match('/^[ぁ-ん]$/u', $item)) {
+            return true;
+        }
+
+        // 同じひらがな2文字
+        if (preg_match('/^([ぁ-ん])\1$/u', $item)) {
+            return true;
+        }
+
+        return false;
+    }
 }

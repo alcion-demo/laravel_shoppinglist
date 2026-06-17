@@ -31,6 +31,7 @@
             <div x-show="activeTab === 'recipe'">
                 <x-shopping.recipe-section 
                     :recipes="$recipes" 
+                    :job_id="$job_id" 
                     :ai_error="$ai_error" 
                 />
             </div>

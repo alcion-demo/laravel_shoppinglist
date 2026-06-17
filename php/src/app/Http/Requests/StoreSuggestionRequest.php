@@ -35,7 +35,6 @@ class StoreSuggestionRequest extends FormRequest
             'ingredients' => [
                 'required',
                 'string',
-                'min:2',
                 'max:2000',
                 // 同じグラフェム（Unicodeの結合文字列）が3回続かないようにカスタムチェック
                 function ($attribute, $value, $fail) {
@@ -50,7 +49,7 @@ class StoreSuggestionRequest extends FormRequest
 
     /**
      * バリデーション失敗時に専用のエラーバッグでリダイレクトする
-     * こうすることで他のタブ／箇所にエラーが表示されるのを防ぐ
+     * 他のタブ／箇所にエラーが表示されるのを防ぐ
      *
      * @param Validator $validator
      * @return void
@@ -70,7 +69,6 @@ class StoreSuggestionRequest extends FormRequest
     {
         return [
             'ingredients.required' => '食材を入力せずに献立提案とな？',
-            'ingredients.min' => 'もう少し詳しく教えてたもれ。',
             'ingredients.max'      => '一度に入力できるのは2000文字まででおじゃる。',
         ];
     }

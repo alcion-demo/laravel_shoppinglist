@@ -16,6 +16,8 @@ use App\Models\CurrentCart;
 use App\Ai\Agents\NoblemanAgent;
 use App\Http\Requests\StoreSuggestionRequest;
 use Laravel\Ai\Responses\StructuredTextResponse;
+use App\Jobs\GenerateRecipeJob;
+use Illuminate\Support\Facades\Cache;
 
 class ShoppingController extends Controller
 {
@@ -30,13 +32,18 @@ class ShoppingController extends Controller
     public function index()
     {
         $userId = auth()->id();
+        \Log::info('recipe job session', [
+    'job_id' => session('job_id'),
+    'latest_recipes' => session('latest_recipes'),
+]);
 
         return view('shopping.index', [
             'items'         => CurrentCart::forUser($userId)->with('item')->get(),
             'history'       => PurchaseLog::forUser($userId)->with('item')->latest('purchased_at')->get()->groupBy('purchased_date_string'),
             'frequentItems' => PurchaseLog::getFrequentItems($userId),
             // セッションからデータがあれば渡す（なければ空配列）
-            'recipes'       => session('recipes', []),
+            'recipes'       => session('latest_recipes', []),
+            'job_id'        => session('job_id'),
             'ai_error'      => session('ai_error'),
             ]);
     }
@@ -111,47 +118,29 @@ class ShoppingController extends Controller
      */
     public function suggest(StoreSuggestionRequest $request, NoblemanAgent $agent)
     {
-        $userId = auth()->id();
-        $validated = $request->validated();
-        $items_input = explode("\n", str_replace("\r", "", $validated['ingredients']));
-        $count = $this->decideRecipeCount($items_input);
+        $ingredients = $request->validated()['ingredients'];
+        $items = explode("\n", str_replace("\r", "", $ingredients));
 
-        try {
-            $start = microtime(true);
-            $response = $agent->prompt("冷蔵庫に" . implode('、', $items_input) . "があるのじゃ。"
-                        . "{$count}個の献立を提案せよ。");
-// logger()->info('recipe sec', [
-//     'time' => round(microtime(true) - $start, 2)
-// ]);
-            // AI が構造化出力を返す場合は `structured` を直接取得する
-            if ($response instanceof StructuredTextResponse) {
-                $data = $response->structured;
-            } else {
-                $data = is_array($response) ? $response : json_decode(json_encode($response), true);
+        foreach ($items as $item) {
+            $item = trim($item);
+
+            if ($this->shoppingservice->isInvalid($item)) {
+                return back()->withErrors([
+                    'ingredients' => '食材でないものを入力とな？'
+                ], 'suggestion');
             }
-
-            // 成功時のみリダイレクト（パラメータを付与してタブを保持）
-            return redirect()->route('shopping.index', ['tab' => 'recipe'])
-                ->with('recipes', $data['recipes'] ?? []);
-
-        } catch (\Exception $e) {
-            $msg = $e->getMessage();
-
-            if (str_contains($msg, 'rate limit')) {
-                return back()->with('ai_error', '混み合っておる（無料枠制限）');
-            }
-
-            if (str_contains($msg, 'timeout')) {
-                return back()->with('ai_error', '思考に時間がかかりすぎたのじゃ…もう一度試してたもれ');
-            }
-
-            if (str_contains($msg, 'schema')) {
-                return back()->with('ai_error', '献立の形が崩れてしまったようじゃ');
-            }
-
-            return back()->with('ai_error', 'これまた珍妙なエラーが起きたのじゃ');
-
         }
+
+        // 件数を計算
+        $count = $this->decideRecipeCount($items);
+        $jobId = uniqid('recipe_');
+
+        GenerateRecipeJob::dispatch($jobId, $ingredients, auth()->id(), $count);
+
+        session()->put('job_id', $jobId);
+
+        return redirect()->route('shopping.index', ['tab'=>'recipe'])
+            ->withInput();
     }
 
     /**
@@ -173,5 +162,38 @@ class ShoppingController extends Controller
         }
 
         return 5;
+    }
+
+    public function getRecipeStatus(string $jobId)
+    {
+        $data = Cache::get("recipe_{$jobId}");
+
+        // AI処理が終わっていなければ status: pending を返す
+        if (!$data) {
+            return response()->json(['status' => 'pending']);
+        }
+
+        // エラー情報が含まれている場合はそれを返す
+        if ($data['status'] === 'error') {
+            session()->forget('job_id');
+            session()->save();
+
+            return response()->json([
+                'status' => 'error',
+                'message' => $data['message']
+            ]);
+        }
+
+        //表示一時保存
+        session()->put('latest_recipes', $data['recipes']);
+        session()->forget('job_id'); // 完了したら不要
+
+        session()->save(); // 確実化
+
+        // AI処理が終わっていればレシピデータを返す
+        return response()->json([
+            'status' => 'completed',
+            'recipes' => $data['recipes']
+        ]);
     }
 }
