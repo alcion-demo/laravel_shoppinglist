@@ -17,11 +17,32 @@
         </div>
     </x-slot>
 
-    <div x-data="{ activeTab: 'list', openHistory: {} }" class="max-w-md mx-auto">
-        <div class="pb-24 p-4">
-            <x-shopping.list-section :items="$items" :frequentItems="$frequentItems" />
-            <x-shopping.history-section :history="$history" />
-            <x-shopping.setting-section />
+    <div x-data="{ 
+        // URLのtabパラメータを優先し、なければ 'list'
+        activeTab: new URLSearchParams(window.location.search).get('tab') || 'list',
+        openHistory: {} 
+    }" class="max-w-md mx-auto">
+
+        <div class="pb-32 p-4">
+            <div x-show="activeTab === 'list'">
+                <x-shopping.list-section :items="$items" :frequentItems="$frequentItems" />
+            </div>
+
+            <div x-show="activeTab === 'recipe'">
+                <x-shopping.recipe-section 
+                    :recipes="$recipes" 
+                    :job_id="$job_id" 
+                    :ai_error="$ai_error" 
+                />
+            </div>
+            
+            <div x-show="activeTab === 'history'">
+                <x-shopping.history-section :history="$history" />
+            </div>
+            
+            <div x-show="activeTab === 'setting'">
+                <x-shopping.setting-section />
+            </div>
             <x-custom-bottom-nav />
         </div>
     </div>

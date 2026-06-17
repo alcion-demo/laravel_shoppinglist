@@ -20,13 +20,13 @@ Route::get('/', function () {
 
 Route::middleware(['auth', 'verified'])->group(function () {
     // ショッピングリスト（メイン画面）
-    // Route::get('/shopping', [ShoppingController::class, 'index'])->name('shopping.index');
-    // Route::post('/shopping', [ShoppingController::class, 'store'])->name('shopping.store');
-    // Route::delete('/shopping/{shoppingItem}', [ShoppingController::class, 'destroy'])->name('shopping.destroy');
     Route::post('/shopping/{id}/purchase', [ShoppingController::class, 'purchase'])->name('shopping.purchase');
+    Route::post('/shopping/suggest', [ShoppingController::class, 'suggest'])->name('shopping.suggest');
 
     // 標準のCRUD処理をリソースでひとまとめにする（必要なものだけ only で指定）
     Route::resource('shopping', ShoppingController::class)->only(['index', 'store', 'destroy', 'edit', 'update']);
+
+    Route::get('/shopping/recipe-status/{jobId}', [ShoppingController::class, 'getRecipeStatus']);
 
     // 管理者のみ：ユーザー登録（Breezeのデフォルトを上書きorラップ）
     // ゲート 'admin-only' は AppServiceProvider で定義済みである必要があります

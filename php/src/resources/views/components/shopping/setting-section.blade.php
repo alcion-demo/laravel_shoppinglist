@@ -1,4 +1,4 @@
-<section x-show="activeTab === 'settings'" class="space-y-6" x-cloak>
+<section x-show="activeTab === 'setting'" class="space-y-6" x-cloak>
     <h1 class="text-2xl font-bold dark:text-white">設定</h1>
 
     <div class="space-y-3">

@@ -43,6 +43,13 @@
                         <label class="block text-[10px] font-black text-gray-400 mb-2 px-4 uppercase tracking-[0.2em]">Password</label>
                         <input type="password" name="password" required class="w-full px-6 py-4 rounded-3xl bg-gray-50 dark:bg-gray-900/80  dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all">
                     </div>
+                    <!-- Remember Me -->
+                    <div class="block mt-4">
+                        <label for="remember_me" class="inline-flex items-center">
+                            <input id="remember_me" type="checkbox" class="rounded dark:bg-gray-900 border-gray-300 dark:border-gray-700 text-indigo-600 shadow-sm focus:ring-indigo-500 dark:focus:ring-indigo-600 dark:focus:ring-offset-gray-800" name="remember">
+                            <span class="ms-2 text-sm text-gray-600 dark:text-gray-400">&nbsp;{{ __('Remember me') }}</span>
+                        </label>
+                    </div>
                     <button type="submit" class="w-full py-5 rounded-3xl bg-blue-600 text-white font-black text-lg shadow-xl shadow-blue-600/30 active:scale-[0.97] transition-all">
                         ログイン
                     </button>
