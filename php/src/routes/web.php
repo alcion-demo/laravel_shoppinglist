@@ -19,12 +19,11 @@ Route::get('/', function () {
 });
 
 Route::middleware(['auth', 'verified'])->group(function () {
+    Route::resource('shopping', ShoppingController::class)->only(['index', 'store', 'destroy', 'edit', 'update']);
+
     // ショッピングリスト（メイン画面）
     Route::post('/shopping/{id}/purchase', [ShoppingController::class, 'purchase'])->name('shopping.purchase');
     Route::post('/shopping/suggest', [ShoppingController::class, 'suggest'])->name('shopping.suggest');
-
-    // 標準のCRUD処理をリソースでひとまとめにする（必要なものだけ only で指定）
-    Route::resource('shopping', ShoppingController::class)->only(['index', 'store', 'destroy', 'edit', 'update']);
 
     Route::get('/shopping/recipe-status/{jobId}', [ShoppingController::class, 'getRecipeStatus']);
 
@@ -34,6 +33,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::resource('users', UserController::class);
     });
 });
+
+// 共有ページ用ルート
+Route::get('/shopping/share/{data}', [ShoppingController::class, 'share'])->name('shopping.share');
+
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

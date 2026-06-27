@@ -28,7 +28,6 @@ class GenerateRecipeJob implements ShouldQueue
         $this->ingredients = $ingredients;
         $this->userId = $userId;
         $this->recipeCount = $recipeCount;
-
     }
 
     /**
@@ -44,7 +43,6 @@ class GenerateRecipeJob implements ShouldQueue
             );
 
             if (empty($data['recipes'])) {
-
                 Cache::put("recipe_{$this->jobId}", [
                     'status' => 'error',
                     'message' => '食材として認識できなかったのじゃ'

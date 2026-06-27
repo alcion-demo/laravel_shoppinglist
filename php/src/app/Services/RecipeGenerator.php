@@ -30,7 +30,7 @@ class RecipeGenerator
                     "{$recipeCount}件の献立を雅に提案せよ。";
 
         $response = $this->agent->prompt($prompt);
-        
+
         // ここでSDK固有の型を剥がして、アプリが扱いやすい配列のみを返す
         return $response->structured;
     }
