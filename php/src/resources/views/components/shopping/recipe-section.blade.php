@@ -97,6 +97,15 @@
         <div class="p-4 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 mt-4">
             <h3 class="font-bold text-lg text-gray-900 dark:text-white" x-text="recipe.name"></h3>
 
+                {{-- 共有ボタン --}}
+                <button 
+                    type="button"
+                    @click="navigator.clipboard.writeText(recipe.share_url); alert('共有URLをコピーしたのじゃ！');"
+                    class="flex items-center gap-1 text-xs bg-green-500 text-white px-2 py-1 rounded hover:bg-green-600 transition"
+                >
+                    <span>レシピ共有</span>
+                </button>
+
             {{-- 不足材料 --}}
             <template x-if="recipe.missing_ingredients && recipe.missing_ingredients.length > 0">
                 <div class="mt-3 p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800">

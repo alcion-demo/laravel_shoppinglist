@@ -18,6 +18,7 @@ use App\Http\Requests\StoreSuggestionRequest;
 use Laravel\Ai\Responses\StructuredTextResponse;
 use App\Jobs\GenerateRecipeJob;
 use Illuminate\Support\Facades\Cache;
+use App\Services\RecipeShareService;
 
 class ShoppingController extends Controller
 {
@@ -27,15 +28,16 @@ class ShoppingController extends Controller
     public function __construct(
         protected ShoppingService $shoppingservice,
         protected CurrentCart $currentCart,
+        protected RecipeShareService $shareService,
     ){}
 
     public function index()
     {
         $userId = auth()->id();
         \Log::info('recipe job session', [
-    'job_id' => session('job_id'),
-    'latest_recipes' => session('latest_recipes'),
-]);
+            'job_id' => session('job_id'),
+            'latest_recipes' => session('latest_recipes'),
+        ]);
 
         return view('shopping.index', [
             'items'         => CurrentCart::forUser($userId)->with('item')->get(),
@@ -88,7 +90,8 @@ class ShoppingController extends Controller
         return redirect()->route('shopping.index')->with('message', 'リストを修正しました！');
     }
 
-    public function destroy(int $shopping) {
+    public function destroy(int $shopping)
+    {
         //論理削除
         $cart = CurrentCart::findOrFail($shopping);
         $cart->delete();
@@ -139,8 +142,18 @@ class ShoppingController extends Controller
 
         session()->put('job_id', $jobId);
 
-        return redirect()->route('shopping.index', ['tab'=>'recipe'])
+        return redirect()->route('shopping.index', ['tab' => 'recipe'])
             ->withInput();
+    }
+
+    public function share(string $data, RecipeShareService $shareService)
+    {
+        try {
+            $recipe = $shareService->decode($data);
+            return view('shopping.share', ['recipe' => $recipe]);
+        } catch (\Exception $e) {
+            abort(404, '献立の復元に失敗いたしました');
+        }
     }
 
     /**
@@ -149,7 +162,7 @@ class ShoppingController extends Controller
      * @param array $items
      * @return integer
      */
-        private function decideRecipeCount(array $items): int
+    private function decideRecipeCount(array $items): int
     {
         $count = count($items);
 
@@ -164,6 +177,12 @@ class ShoppingController extends Controller
         return 5;
     }
 
+    /**
+     * レシピ取得
+     *
+     * @param string $jobId
+     * @return void
+     */
     public function getRecipeStatus(string $jobId)
     {
         $data = Cache::get("recipe_{$jobId}");
@@ -184,8 +203,14 @@ class ShoppingController extends Controller
             ]);
         }
 
+        // ここで共有URLを各レシピに注入する
+        $recipes = array_map(function ($recipe) {
+            $recipe['share_url'] = $this->shareService->encode($recipe);
+            return $recipe;
+        }, $data['recipes']);
+
         //表示一時保存
-        session()->put('latest_recipes', $data['recipes']);
+        session()->put('latest_recipes', $recipes);
         session()->forget('job_id'); // 完了したら不要
 
         session()->save(); // 確実化
@@ -193,7 +218,7 @@ class ShoppingController extends Controller
         // AI処理が終わっていればレシピデータを返す
         return response()->json([
             'status' => 'completed',
-            'recipes' => $data['recipes']
+            'recipes' => $recipes
         ]);
     }
 }
