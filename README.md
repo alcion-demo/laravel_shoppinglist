@@ -12,12 +12,25 @@
 <img alt="Static Badge" src="https://img.shields.io/badge/-breeze?style=plastic&logo=breeze&label=breeze&labelColor=c1c1c1&color=c1c1c1">
 
 ## プロジェクト概要
-Laravel 13 と Tailwind CSS を使用した、シンプルでモダンなショッピングリスト管理アプリケーションです。  
-日常の買い物を効率化するためのメモアプリです。商品のステータス管理（未購入・カゴ・購入済み）やカテゴリ分け、AIによるレシピ提案（実装中）などの機能を備えています。  
+- Laravel 13 / PHP 8.4 を使用した Web アプリケーション
+- Laravel Breeze ベースの認証機能
+- ショッピングリスト管理
+- 購入履歴管理
+- AI 献立提案（非同期ジョブ）
+- 管理者ユーザー管理機能
+
 ## 学習・検証目的
-- モダンな設計パターンの実践: Controller からロジックを分離し、Service クラスに集約する「クリーンな設計」の探究。
-- 最新技術スタックの検証: Laravel 13 / PHP 8.4 という最先端環境における堅牢なアプリケーション構築。
-- UI/UXの高度化: Tailwind CSS を駆使した、ストレスフリーな動的ユーザー体験の実装。  
+- Laravel アプリケーション設計の理解
+  - Controller に処理を集中させず、Service 層へビジネスロジックを分離する構成を検証。
+
+- 非同期処理の実装経験
+  - Laravel Queue / Job を利用し、AI処理など時間のかかる処理をバックグラウンド実行する構成を検証。
+
+- AI API連携の検証
+  - Laravel AI SDK を利用し、AI Agent による構造化レスポンス取得とアプリケーション連携を実装。
+
+- Docker 開発環境の構築
+  - WSL2 + Docker Compose を利用し、アプリケーション開発環境をコンテナ内で完結させる構成を検証。  
 
 ## 技術選定の背景
 - Laravel 13 & PHP 8.4: 型安全性と最新の言語機能を最大限に活用し、長期的なメンテナンス性を確保するため。
@@ -25,28 +38,31 @@ Laravel 13 と Tailwind CSS を使用した、シンプルでモダンなショ�
 - Service Layer Pattern: ビジネスロジックの肥大化を防ぎ、テスト容易性と可視性を高めるための建築的選択
 
 ## 主な機能
-- 商品管理:  
-	- 商品名、個数、価格、カテゴリを指定してリストに追加
-	- 商品の削除
-- ステータス管理（トグル機能）: 
-	- 「未購入」→「カゴ」→「購入済み」の3段階でステータスを切り替え
-	- 購入済みになったタイミングで「購入日」を自動記録
-- 重複購入アラート: 
-	- 同じ商品を3日以内に購入している場合、警告を表示
-- カテゴリ管理: 
-	- 薬局、百均、スーパー、その他のカテゴリ分け
-	- カテゴリに応じたアイコンの自動切り替え
-- ユーザー認証: 
-	- Laravel Breeze によるログイン、新規登録、プロフィール管理
-- UI/UX理: 
-	- ダークモード対応
-	- モバイルフレンドリーなレイアウト（Alpine.js 使用）
+- 認証フロー
+  - ログイン、ログアウト、登録、パスワードリセット、メール認証（`routes/auth.php`）
+- ショッピングリスト管理
+  - 商品をカート（`CurrentCart`）に追加
+  - 既存アイテムの編集、削除
+- 購入処理と履歴保存
+  - カートから購入完了を記録して `PurchaseLog` に保存
+  - 購入履歴を日付ごとにグループ化して取得
+  - よく購入する商品を集計して取得
+- AI 献立提案
+  - `ShoppingController::suggest` で材料入力を受け取り、`GenerateRecipeJob` をキューに投入
+  - `RecipeGenerator` が `NoblemanAgent` を使って AI から構造化出力を取得
+  - ジョブ結果をキャッシュに保持し、`ShoppingController::getRecipeStatus` で進捗/完了を返却
+- 管理者権限の gate 定義
+  - `AppServiceProvider` で `admin` gate を定義
+  - `admin` ミドルウェア付きで `UserController` のルートを保護
+- プロフィール管理
+  - プロフィール編集、メール再認証処理、アカウント削除
+
 ## 使用技術
 | カテゴリ | 使用技術 |
 | :--- | :--- |
 | **Backend** | Laravel 13, breeze, Pest, PHP_CodeSniffer |
 | **Frontend** | Tailwind CSS, Node.js, Alpine.js |
-| **AI / External Service** | Gemini API（AI SDK） |
+| **AI** |Laravel AI / Gemini（AI SDK） |
 | **Infrastructure** | Docker Compose (App / Node / MySQL / Nginx) |
 | **OS Environment** | WSL2 (Ubuntu / Alpine Linux) |
 | **Database** | MySQL 8.x |
@@ -103,116 +119,134 @@ php artisan vendor:publish --provider="Laravel\Ai\AiServiceProvider"
 ```
 ※Gemini無料枠使用、`.env` ファイルを編集して、データベース接続情報と AI API キーを設定してください。
 ## ディレクトリ構成（主要部分）
-- **`/` (Root)**
-    - `docker-compose.yaml` - Docker構成定義
-    - **`php/`** - PHP実行環境
-        - `Dockerfile` - PHPイメージビルド定義
-        - **`src/`** - Laravelアプリケーション本体
-            - **`app/`**
-                - `Enums/` - カテゴリ・ステータス等の定数定義
-                - **`Http/`**
-                    - `Controllers/` - ビジネスロジックの制御
-                    - `Requests/` - バリデーション
-                - `Models/` - DBモデル (Item, ShoppingLog, User)
-                - `Services/` - 共通ロジック (ShoppingService)
-            - **`database/`**
-                - `migrations/` - テーブル設計・スキーマ管理
-            - **`resources/`**
-                - `views/` - 画面テンプレート (Blade)
-            - **`routes/`**
-                - `web.php` - ルーティング定義
-    - **`nginx/`** - Webサーバー設定
-        - `default.conf` - Nginx設定ファイル
+- `compose.yaml` / `docker-compose.yaml` 相当の Docker 定義が存在
+- `php/`
+  - `Dockerfile`
+  - `src/`
+    - `app/`
+      - `Ai/` - AI エージェント
+      - `Enums/` - `ShopType` 等の列挙型
+      - `Http/`
+        - `Controllers/` - 画面処理とルーティングロジック
+        - `Requests/` - バリデーションフォームリクエスト
+      - `Jobs/` - 非同期ジョブ
+      - `Models/` - Eloquent モデル
+      - `Providers/` - サービスプロバイダー
+      - `Services/` - ビジネスロジック
+    - `config/` - `ai.php` などの設定
+    - `database/`
+      - `migrations/` - テーブル定義
+    - `resources/`
+      - `views/` - Blade テンプレート
+    - `routes/`
+      - `web.php` - アプリケーションルート
+      - `auth.php` - 認証ルート
+- `nginx/`
+  - `default.conf`
 
 ## テスト済みの主要機能
 
 - **認証周り**: ログイン、ログアウト、登録処理が正常に動作すること。
 - **CRUD操作**: 商品データの登録、編集、削除が管理者権限で正常に行えること。
 - **バリデーション**: 不正なデータ入力時に適切なエラーメッセージが表示されること。
-- **決済フロー**: Stripe テスト環境を用いた決済処理が完了すること。
 
 ## 設計・実装の特徴
-
-実務上の運用フェーズを想定し、高度な認可制御と管理支援機能を実装しています。
-
-- Service パターンの採用
-	- `ShoppingService`にビジネスロジック（ステータス遷移や重複チェック）を切り出し、コントローラーを軽量に保っています。
-- Enum の活用:ステータスやカテゴリを PHP の Enum で定義し、表示ラベルや CSSクラス、アイコン名の取得ロジックを一元管理しています。
-	- 安全性の担保: 管理者のみがアクセスできる決済履歴や、一斉メール送信権限を確実にガードしています。
-- コンポーネント指向のフロントエンド
-	- Blade Components と動的コンポーネント (`x-dynamic-component`)を活用し、メンテナンス性の高い UI を構築しています。
-- 品質保証
-	- Pest による網羅的なテスト:
-		- Gate による認可の不備がないか（一般ユーザーが管理者機能に触れないか）。
-		- Impersonation 時にセッションが正しく切り替わるか。
-		- Stripe 連携および勤怠計算ロジックの正確性。
+- Service レイヤー
+  - `ShoppingService` と `RecipeGenerator` にビジネスロジックを分離
+- Enum 活用
+  - `App\Enums\ShopType` によるカテゴリ・アイコン・色の管理
+- AI エージェント設計
+  - `App\Ai\Agents\NoblemanAgent` が構造化出力スキーマを定義
+  - `GenerateRecipeJob` が非同期処理結果を `Cache` に保存
+- 管理者認可
+  - `AppServiceProvider` で `Gate::define('admin', ...)` を設定
 ---
 
 ## 処理の流れ
 ```mermaid
-graph TD
-    A[ユーザー] -->|商品入力| B[ShoppingController store]
-    B -->|ロジック委譲| C[ShoppingService createLog]
-    C -->|保存| D[(MySQL)]
-    
-    A -->|ステータス切り替え| E[ShoppingController toggle]
-    E -->|次ステータス計算| F[ShoppingService toggleStatus]
-    F -->|更新| D
-    
-    A -->|一覧表示| G[ShoppingController index]
-    G -->|データ取得| H[ShoppingService getActiveList]
-    H -->|重複チェック| I[ShoppingService checkRecentPurchase]
-    I --> G
-    G -->|レンダリング| J[Blade View]
+sequenceDiagram
+    autonumber
+
+    actor User as ユーザー
+    participant Front as Blade / Alpine.js
+    participant Controller as ShoppingController
+    participant Service as ShoppingService
+    participant Job as GenerateRecipeJob
+    participant AI as RecipeGenerator
+    participant DB as Database
+
+    User->>Front: 商品登録
+    Front->>Controller: POST送信
+
+    Controller->>Service: 保存処理
+
+    Service->>DB: CurrentCart保存
+    DB-->>Service: 完了
+
+    Service-->>Controller: 結果返却
+    Controller-->>Front: 一覧更新
+
+
+    User->>Front: 献立提案依頼
+
+    Front->>Controller: 材料送信
+
+    Controller->>Job: 非同期処理開始
+
+    Job->>AI: 献立生成
+
+    AI-->>Job: レシピ結果
+
+    Job->>DB: キャッシュ保存
 ```
 ## クラス構成図
 ```mermaid
 classDiagram
     class User {
-        +int id
-        +string name
-        +string email
-        +bool is_admin
+        +userList($request)
     }
-    class Item {
-        +int id
-        +string name
-        +int category_id
+    class ShoppingItem {
+        +recentPurchaseLogs()
+        +scopeActive()
+        +scopeForUser(int)
     }
-    class ShoppingLog {
-        +int id
-        +string display_name
-        +int quantity
-        +ShoppingStatus status
-        +CategoryType category_id
-        +DateTime bought_at
-        +formattedPrice()
+    class CurrentCart {
+        +item()
+        +scopeForUser(int)
+    }
+    class PurchaseLog {
+        +item()
+        +getPurchasedDateStringAttribute()
+        +scopeForUser(int)
+        +getFrequentItems(int, int)
     }
     class ShoppingService {
-        +createLog(array data)
-        +toggleStatus(ShoppingLog log)
-        +getActiveList()
-        +checkRecentPurchase(string name)
+        +savePurchase(int, array)
+        +recordPurchase(int, array)
+        +getRecipeSuggestions(array)
+        +isInvalid(string)
     }
-    class ShoppingStatus {
-        <<enumeration>>
-        UNPURCHASED
-        IN_CART
-        PURCHASED
-        +next()
+    class RecipeGenerator {
+        +generate(string, int): array
     }
-    class CategoryType {
-        <<enumeration>>
-        PHARMACY
-        HUNDRED_YEN
+    class NoblemanAgent {
+        +instructions()
+        +schema(JsonSchema)
     }
-
-    User "1" -- "0..*" ShoppingLog
-    Item "1" -- "0..*" ShoppingLog
-    ShoppingLog ..> ShoppingStatus
-    ShoppingLog ..> CategoryType
-    ShoppingService ..> ShoppingLog
+    class GenerateRecipeJob {
+        +handle(RecipeGenerator)
+    }
+    User --> ShoppingItem
+    ShoppingItem --> CurrentCart
+    ShoppingItem --> PurchaseLog
+    CurrentCart --> ShoppingItem
+    PurchaseLog --> ShoppingItem
+    ShoppingController --> ShoppingService
+    ShoppingController --> GenerateRecipeJob
+    ShoppingService --> NoblemanAgent
+    GenerateRecipeJob --> RecipeGenerator
+    RecipeGenerator --> NoblemanAgent
 ```
 ## 今後の改善予定
-- Webhook 連携: Stripe の決済イベントをより詳細にハンドリングし、非同期での在庫管理を強化。
-- Pest アーキテクチャテスト: コードの依存関係が崩れないよう、アーキテクチャ自体をテストで縛る。
+- 後で書く。
+- 後で書く。

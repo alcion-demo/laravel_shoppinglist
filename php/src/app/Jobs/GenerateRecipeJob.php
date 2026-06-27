@@ -4,11 +4,11 @@ namespace App\Jobs;
 
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
-use App\Ai\Agents\NoblemanAgent;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Cache;
+use App\Services\RecipeGenerator;
 
 class GenerateRecipeJob implements ShouldQueue
 {
@@ -34,19 +34,14 @@ class GenerateRecipeJob implements ShouldQueue
     /**
      * Execute the job.
      */
-    public function handle(NoblemanAgent $agent): void
+    public function handle(RecipeGenerator $generator): void
     {
-        $items_input = explode("\n", str_replace("\r", "", $this->ingredients));
-
         try {
             // AIへのプロンプト実行
-            $prompt = "冷蔵庫に" . implode('、', $items_input) . "があるのじゃ。" .
-                        "これらを活用しつつ、必要であれば他の食材を買い足すことも考慮して、" .
-                        "{$this->recipeCount}件の献立を雅に提案せよ。";
-
-            $response = $agent->prompt($prompt);
-
-            $data = $response->structured;
+            $data = $generator->generate(
+                $this->ingredients,
+                $this->recipeCount
+            );
 
             if (empty($data['recipes'])) {
 
