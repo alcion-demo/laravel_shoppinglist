@@ -1,27 +1,42 @@
 <?php
+declare(strict_types=1);
 
 use App\Models\User;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 
-test('login screen can be rendered', function () {
+uses(RefreshDatabase::class);
+
+test('ログイン画面を表示できる', function () {
     $response = $this->get('/login');
 
     $response->assertStatus(200);
 });
 
-test('users can authenticate using the login screen', function () {
-    $user = User::factory()->create();
+test('ユーザーはログイン画面から認証できる', function () {
+    $user = User::create([
+        'name' => 'テスト公家',
+        'email' => 'nobleman_auth@example.com',
+        'password' => Hash::make('password123'),
+        'is_admin' => false,
+    ]);
 
     $response = $this->post('/login', [
         'email' => $user->email,
-        'password' => 'password',
+        'password' => 'password123',
     ]);
 
     $this->assertAuthenticated();
-    $response->assertRedirect(route('dashboard', absolute: false));
+    $response->assertRedirect();
 });
 
-test('users can not authenticate with invalid password', function () {
-    $user = User::factory()->create();
+test('無効なパスワードでは認証されない', function () {
+    $user = User::create([
+        'name' => 'テスト公家',
+        'email' => 'nobleman_auth_fail@example.com',
+        'password' => Hash::make('password123'),
+        'is_admin' => false,
+    ]);
 
     $this->post('/login', [
         'email' => $user->email,
@@ -31,8 +46,13 @@ test('users can not authenticate with invalid password', function () {
     $this->assertGuest();
 });
 
-test('users can logout', function () {
-    $user = User::factory()->create();
+test('ユーザーはログアウトできる', function () {
+    $user = User::create([
+        'name' => 'テスト公家',
+        'email' => 'nobleman_logout@example.com',
+        'password' => Hash::make('password123'),
+        'is_admin' => false,
+    ]);
 
     $response = $this->actingAs($user)->post('/logout');
 

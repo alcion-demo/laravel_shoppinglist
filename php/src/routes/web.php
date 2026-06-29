@@ -10,9 +10,11 @@ use App\Http\Controllers\UserController;
 //     return view('welcome');
 // });
 
-// Route::get('/dashboard', function () {
-//     return view('dashboard');
-// })->middleware(['auth', 'verified'])->name('dashboard');
+Route::middleware(['auth', 'verified'])
+    ->get('/dashboard', function () {
+        return redirect()->route('shopping.index');
+    })
+    ->name('dashboard');
 
 Route::get('/', function () {
     return redirect()->route('shopping.index');

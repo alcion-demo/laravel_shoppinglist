@@ -15,7 +15,7 @@ class UserController extends Controller
     /**
      * __construct
      */
-    public function __construct(protected User $user, protected UserService $userServic)
+    public function __construct(protected User $user, protected UserService $userService)
     {}
 
     public function index(Request $request)
@@ -70,11 +70,11 @@ class UserController extends Controller
         return redirect()->route('admin.users.index')->with('status', 'ユーザーを削除しました');
     }
 
-    public function store(UserStoreRequest $request, UserService $userServic)
+    public function store(UserStoreRequest $request, UserService $userService)
     {
-        $validated = $request->validated();
+        $data = $request->validated();
         $data['is_admin'] = $request->has('is_admin');
-        $this->$userService->createUser($data);
+        $userService->createUser($data);
 
         return redirect()->route('admin.users.index')->with('status', '管理者を追加しました');
     }
