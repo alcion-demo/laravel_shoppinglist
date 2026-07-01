@@ -48,7 +48,7 @@
                 </div>
             </button>
 
-            <div x-show="openHistory['{{ $date }}']" class="border-t dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
+            <div x-show="openHistory['{{ $date }}']" class="border-t dark:border-gray-700 dark:text-white bg-gray-50 dark:bg-gray-900/50">
                 @foreach($logs as $log)
                     <div class="flex justify-between items-center p-4 border-b">
                         <span class="text-sm">{{ $log->item->name }}</span>

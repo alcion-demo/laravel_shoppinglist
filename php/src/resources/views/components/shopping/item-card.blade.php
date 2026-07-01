@@ -5,6 +5,16 @@
     <div class="flex-1 min-w-0 mr-4">
         <div class="text-gray-900 dark:text-gray-100 font-bold text-sm truncate mb-1">
             {{ $cart->item->name }}
+
+            @php
+                $recentPurchasedAt = \App\Models\PurchaseLog::getRecentPurchaseIn3Days(auth()->id(), $cart->shopping_item_id);
+            @endphp
+            @if($recentPurchasedAt)
+                <span class="inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-medium bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 whitespace-nowrap">
+                    {{ $recentPurchasedAt->format('m/d') }}済
+                </span>
+            @endif
+
         </div>
 
         <div class="flex items-center gap-2 text-[11px] text-gray-500 dark:text-gray-400">
@@ -28,7 +38,7 @@
 
     <div class="flex items-center gap-2">
         
-<form action="{{ route('shopping.purchase', $cart->id) }}" method="POST">
+        <form action="{{ route('shopping.purchase', $cart->id) }}" method="POST">
             @csrf
             <button type="submit" 
                     class="text-green-500 hover:text-green-600 w-8 h-8 bg-green-500/10 dark:bg-green-900/20 rounded-xl transition-colors font-black text-xs flex items-center justify-center leading-none" 

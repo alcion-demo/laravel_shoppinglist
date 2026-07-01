@@ -65,4 +65,22 @@ class PurchaseLog extends Model
             ->map(fn($logs) => $logs->first()); // 代表して最新の情報を返す
     }
 
+    /**
+     * 過去3日以内に購入された履歴があるか判定
+     *
+     * @param integer $userId
+     * @param integer $shoppingItemId
+     * @return void
+     */
+    public static function getRecentPurchaseIn3Days(int $userId, int $shoppingItemId)
+    {
+        $log = self::forUser($userId)
+            ->where('shopping_item_id', $shoppingItemId)
+            ->where('purchased_at', '>=', now()->subDays(3))
+            ->latest('purchased_at')
+            ->first();
+
+        return $log ? $log->purchased_at : null;
+    }
+
 }
