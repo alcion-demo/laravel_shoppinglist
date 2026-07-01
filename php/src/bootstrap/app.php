@@ -21,15 +21,14 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
-    })->create();
         $exceptions->render(function (AuthenticationException $e, Request $request) {
             return redirect()->route('login')->with('status', 'ログインしてください。');
         });
 
         $exceptions->render(function (HttpException $e, $request) {
-        if ($e->getStatusCode() === 419) {
-            return redirect()->route('login')
-                ->with('error', 'セッションが切れました。再度ログインしてください。');
-        }
-    });
+            if ($e->getStatusCode() === 419) {
+                return redirect()->route('login')
+                    ->with('error', 'セッションが切れました。再度ログインしてください。');
+            }
+        });
+    })->create();
