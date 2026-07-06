@@ -19,11 +19,6 @@ beforeEach(function () {
 
     $this->adminUser = $admin;
 
-    // UserController@destroy 内の $user->todos()->delete() の呼び出しで
-    // BadMethodCallException が発生するのを防ぐため、動的に todos リレーションを定義
-    User::resolveRelationUsing('todos', function ($userModel) {
-        return $userModel->hasMany(User::class, 'id', 'id')->whereRaw('1 = 0');
-    });
 });
 
 /*
